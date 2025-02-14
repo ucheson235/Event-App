@@ -44,7 +44,7 @@ function Header({ formData = { name: "", email: "", ticket: { type: "" } } }) {
       </Link>
     </div>
     <a
-				href="/my-ticket"
+				href="/ready"
 				className="group px-4 py-2 rounded-xl bg-white text-black flex items-center relative overflow-hidden"
 			>
 				MY TICKETS
