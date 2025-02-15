@@ -5,16 +5,19 @@ import ticz from "../assets/svg/ticz.png";
 import { FormDataContext } from "../state/FormDataContext";
 
 function Header() {
-  const { formData } = useContext(FormDataContext);
+  const contextValue = useContext(FormDataContext);
+  console.log("Context Value:", contextValue);
+
+  const { formData = {} } = contextValue || {}; // Default to empty object
   console.log("Form Data in Header:", formData);
 
   const { pathname } = useLocation();
 
   const getLinkPath = () => {
-    if (formData.name && formData.email && formData.ticket.type) {
-      return "/ready"; 
+    if (formData.name && formData.email && formData.ticket?.type) {
+      return "/ready";
     }
-    return "/my-ticket"; 
+    return "/my-ticket";
   };
 
   const isMyTicketsActive = pathname === "/my-ticket" || pathname === "/ready";

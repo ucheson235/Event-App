@@ -10,6 +10,7 @@ import { FormDataProvider } from "./state/FormDataContext.jsx";
 
 function App() {
   return (
+    
     <FormDataProvider>
       <div className="min-h-screen p-6 sm:p-10 overflow-hidden bg-[radial-gradient(closest-side,rgba(36,160,181,0.2)_0%,rgba(36,160,181,0)_100%),linear-gradient(to_left,#02191d,#02191d)]">
         <Router basename="/Event-App">
@@ -36,7 +37,7 @@ function App() {
           transition={Bounce}
         />
       </div>
-    </FormDataProvider>
+      </FormDataProvider>
   );
 }
 
