@@ -3,10 +3,9 @@ import { FaEnvelope } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-
 const saveToIndexedDB = (data) => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("FormDB", 1);
+    const request = indexedDB.open("FormDB", 2); // Increment the version number
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
@@ -20,8 +19,8 @@ const saveToIndexedDB = (data) => {
       const tx = db.transaction("formData", "readwrite");
       const store = tx.objectStore("formData");
       store.get(1).onsuccess = (e) => {
-        const existing = e.target.result || { id: 1 };
-        store.put({ ...existing, ...data });
+        const existing = e.target.result || { id: 1, data: {} };
+        store.put({ id: 1, data: { ...existing.data, ...data } });
         resolve();
       };
       tx.onerror = (e) => {
@@ -34,8 +33,6 @@ const saveToIndexedDB = (data) => {
     };
   });
 };
-  
-	  
 
 function Details() {
   const [loading, setLoading] = useState(false);
@@ -51,36 +48,37 @@ function Details() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
-    const request = indexedDB.open("FormDB", 1);
-  
-    // Create object store during setup/upgrade
+    const request = indexedDB.open("FormDB", 2); // Increment the version number
+
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains("formData")) {
         db.createObjectStore("formData", { keyPath: "id" });
       }
     };
-  
+
     request.onsuccess = (event) => {
       const db = event.target.result;
-      
-      // Check if store exists before proceeding
       if (!db.objectStoreNames.contains("formData")) {
-        console.log("Object store not found");
+        console.error("Object store 'formData' not found");
         return;
       }
-  
+
       const transaction = db.transaction("formData", "readonly");
       const store = transaction.objectStore("formData");
       const getRequest = store.get(1);
-  
+
       getRequest.onsuccess = () => {
         if (getRequest.result) {
           setFormData(getRequest.result.data);
         }
       };
+
+      getRequest.onerror = (e) => {
+        console.error("Error fetching data from IndexedDB:", e.target.error);
+      };
     };
-  
+
     request.onerror = (event) => {
       console.error("IndexedDB error:", event.target.error);
     };
@@ -92,63 +90,73 @@ function Details() {
   }, [formData]);
 
   useEffect(() => {
-    setIsFormValid(name.trim() !== "" && email.trim() !== "" && specialRequest.trim() !== "" && images !== "");
+    setIsFormValid(
+      name.trim() !== "" &&
+      email.trim() !== "" &&
+      specialRequest.trim() !== "" &&
+      images !== ""
+    );
   }, [name, email, specialRequest, images]);
 
   const handleFileUpload = (file) => {
-	if (!file) return;
-  
-	const reader = new FileReader();
-	reader.onloadend = () => {
-	  setFormData((prevState) => ({
-		...prevState,
-		images: reader.result, 
-	  }));
-	};
-	reader.readAsDataURL(file);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: reader.result, 
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   function onChange(e) {
-	if (e.target.files) {
-	  handleFileUpload(e.target.files[0]);
-	} else {
-	  setFormData((prevState) => ({
-		...prevState,
-		[e.target.id]: e.target.value,
-	  }));
-	}
+    if (e.target.files) {
+      handleFileUpload(e.target.files[0]);
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: e.target.value,
+      }));
+    }
   }
-
- 
 
   function onSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    
+
+    console.log("Form Data:", formData);
+
     const existing = JSON.parse(localStorage.getItem("eventData")) || {};
     const mergedData = { 
       ...existing,
       ...formData
     };
 
-     // Update formData in the parent component here too
-  setFormData(mergedData);
-    
+    console.log("Merged Data:", mergedData);
+
+    setFormData(mergedData);
     localStorage.setItem("eventData", JSON.stringify(mergedData));
-    
+
     saveToIndexedDB(mergedData)
       .then(() => {
+        console.log("Data stored successfully in IndexedDB");
         toast.success("Listing created successfully!");
-        navigate("/ready");
+        setTimeout(() => {
+          console.log("Navigating to /ready after a delay");
+          navigate("/ready");
+        }, 1000); // Delay navigation by 1 second
       })
       .catch((error) => {
-        console.log(error);
+        console.error("IndexedDB error:", error);
         toast.error(error.message);
       })
       .finally(() => {
         setLoading(false);
       });
   }
+
   return (
     <div className="flex items-center justify-center min-h-screen p-6">
       <div className="bg-[#041e23] rounded-[40px] border border-[#0e464f] w-full max-w-screen-md min-h-[850px] px-6 py-4 sm:px-10">
@@ -173,7 +181,6 @@ function Details() {
                     id="images"
                     onChange={onChange}
                   />
-				  
                   <span className="text-white text-sm sm:text-base text-center">
                     Drag & drop or click to upload
                   </span>
@@ -225,8 +232,7 @@ function Details() {
                   Back
                 </button>
               </Link>
-                {/* In Details.js - Fix the button children */}
-                <button 
+              <button 
                 type="submit"
                 disabled={!isFormValid || loading}
                 className={`py-3 rounded-md w-full ${
@@ -235,7 +241,7 @@ function Details() {
                     : "bg-gray-500 cursor-not-allowed"
                 }`}
               >
-                {loading ? "Processing..." && navigate("/ready") : "Get My Free Ticket"}
+                {loading ? "Processing..." : "Get My Free Ticket"}
               </button>
             </div>
           </div>
