@@ -16,8 +16,8 @@ function App() {
           <Header />
           <Routes>
             <Route path="/" element={<Ticket />} />
-            <Route path="/Details" element={<Details />} />
-            <Route path="Ready" element={<Ready />} />
+            <Route path="/details" element={<Details />} />
+            <Route path="ready" element={<Ready />} />
             <Route path="/my-ticket" element={<MyTicket />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
